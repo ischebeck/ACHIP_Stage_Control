@@ -6,9 +6,9 @@ import signal
 # from PyQt5.QtCore import QTimer, pyqtSlot, QEvent, QLine
 # from PyQt5 import Qt, uic
 # import PyQt4
-from PyQt4.QtCore import pyqtSlot, QTimer, QEvent, QLine
-from PyQt4 import uic, Qt
-from PyQt4.QtGui import QMainWindow, QApplication, QDockWidget, QSpacerItem
+from PyQt5.QtCore import pyqtSlot, QTimer, QEvent, QLine
+from PyQt5 import uic, Qt
+from PyQt5.QtWidgets import QMainWindow, QApplication, QDockWidget, QSpacerItem
 import subprocess
 # from functools import partial
 from otherWidgets import ValveWidget, MagnetWidget, BPMWidget

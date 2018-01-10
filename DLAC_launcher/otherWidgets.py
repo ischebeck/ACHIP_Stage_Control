@@ -2,10 +2,10 @@
 # from PyQt5 import QtWidgets, Qt, uic
 # from PyQt5.QtCore import pyqtSlot, QTimer, QSize
 # PyQt4 imports
-from PyQt4.QtCore import pyqtSlot, QTimer, QThread, QSize
-from PyQt4 import uic, Qt
-import PyQt4.QtGui as QtWidgets
-from PyQt4.QtGui import QSizePolicy
+from PyQt5.QtCore import pyqtSlot, QTimer, QThread, QSize
+from PyQt5 import uic, Qt
+import PyQt5.QtWidgets as QtWidgets
+from PyQt5.QtWidgets import QSizePolicy
 from axes_canvas import AxesCanvas
 from axes_limits import AxesLimits
 from interfaces import Quadrupole, Corrector, BPM
