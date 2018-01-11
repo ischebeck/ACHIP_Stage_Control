@@ -47,41 +47,75 @@ class hexapodControl(ControlWithRefresh):
     def __init__(self, name, refresh=500, parent=None):
         super().__init__(parent=parent)
         self.name = name
+        self.isConnected = {}
+        self.isHome = {}
         self.controller = hexapod(self.name)
         self.initUI()
         self.makeConnections()
         self.timer.start()
+        self.setWindowTitle('Hexapod Control')
         
     def initUI(self):
         uic.loadUi('ui/hexapod.ui', self)
 
-        self.axes = ['x', 'y', 'z', 'alpha', 'beta', 'gamma']
+        self.axes = ['x', 'y', 'z', 'pitch', 'yaw', 'roll']
         self.axesControl = {'x': {'pos': self.posX, 'set': self.setX, 'setStep': self.setStepX, 'home': self.homeX}, 
                             'y': {'pos': self.posY, 'set': self.setY, 'setStep': self.setStepY, 'home': self.homeY}, 
                             'z': {'pos': self.posZ, 'set': self.setZ, 'setStep': self.setStepZ, 'home': self.homeZ}, 
-                            'alpha': {'pos': self.posAlpha, 'set': self.setAlpha, 'setStep': self.setStepAlpha, 'home': self.homeAlpha}, 
-                            'beta': {'pos': self.posBeta, 'set': self.setBeta, 'setStep': self.setStepBeta, 'home': self.homeBeta}, 
-                            'gamma': {'pos': self.posGamma, 'set': self.setGamma, 'setStep': self.setStepGamma, 'home': self.homeGamma}} 
+                            'pitch': {'pos': self.posPitch, 'set': self.setPitch, 'setStep': self.setStepPitch, 'home': self.homePitch}, 
+                            'yaw': {'pos': self.posYaw, 'set': self.setYaw, 'setStep': self.setStepYaw, 'home': self.homeYaw}, 
+                            'roll': {'pos': self.posRoll, 'set': self.setRoll, 'setStep': self.setStepRoll, 'home': self.homeRoll}} 
            
         for axis in self.axes:
+            self.isConnected[axis] = False
+            self.isHome[axis] = False
             self.axesControl[axis]['home'].clicked.connect(self.home(axis))
         
+        self.buttonConnect.clicked.connect(self.connect)
+        self.buttonDisconnect.clicked.connect(self.disconnect)
         self.buttonStop.clicked.connect(self.stopAll)
         self.buttonHomeAll.clicked.connect(self.homeAll)        
     
     def makeConnections(self):
         for axis in self.axes:
-            self.axesControl[axis]['set'].valueChanged.connect(self.controller.setValue(axis))
-                
+            self.axesControl[axis]['setStep'].valueChanged.connect(self.axesControl[axis]['set'].setSingleStep)
+            self.axesControl[axis]['set'].valueChanged.connect(self.setValue(axis))
+            
+    
     def refresh(self):
         '''
         A function that reads the machine and updates the values
         '''
                 
         for axis in self.axes:
-            # position needs to be read from controller
-            self.axesControl[axis]['pos'].setText(str(np.round(self.axesControl[axis]['set'].value(), 3)))
-            self.axesControl[axis]['set'].setSingleStep(self.axesControl[axis]['setStep'].value())
+            
+            if self.isConnected[axis]:
+                # position needs to be read from controller
+                self.axesControl[axis]['pos'].setText(str(np.round(self.axesControl[axis]['set'].value(), 3)))
+                pass
+            if self.controller.isMoving(axis):
+                self.axesControl[axis]['pos'].setStyleSheet('QLabel {background: orange}')
+            else:
+                self.axesControl[axis]['pos'].setStyleSheet('QLabel {background:}')
+            
+    
+    def connect(self):
+        isConnectedList = [] 
+        for axis in self.axes:
+            self.isConnected[axis] = self.controller.connect(axis)
+            isConnectedList.append(self.isConnected[axis])
+        if all(isConnectedList):
+            self.buttonConnect.setStyleSheet('QPushButton {background: green}')         
+            
+    def disconnect(self):
+        for axis in self.axes:
+            self.isConnected[axis] = not(self.controller.disconnect(axis))
+            self.isHome[axis] = False
+            self.axesControl[axis]['home'].setStyleSheet('QPushButton {background: }')
+            self.axesControl[axis]['pos'].setText('not connected')
+            
+        self.buttonHomeAll.setStyleSheet('QPushButton {background: }')     
+        self.buttonConnect.setStyleSheet('QPushButton {background: }')       
     
     def disable(self, axis):
         self.axesControl[axis]['set'].setEnabled(False)        
@@ -90,25 +124,38 @@ class hexapodControl(ControlWithRefresh):
     def enable(self, axis):
         self.axesControl[axis]['set'].setEnabled(True)        
         self.axesControl[axis]['setStep'].setEnabled(True)
+      
+    def setValue(self, axis):
+        def function(value):
+            self.controller.setValue(axis, value)
+        return function
         
     def home(self, axis):
         def homeFunc():
-            print('Home ', axis)
-            self.disable(axis)            
-            self.controller.home(axis)
-            self.enable(axis)
-            self.axesControl[axis]['set'].setValue(0)
+            if self.isConnected[axis]:
+                print('Home Hexapod ', axis)
+                self.disable(axis)            
+                self.isHome[axis] = self.controller.home(axis)
+                self.enable(axis)
+                if self.isHome[axis]:
+                    self.axesControl[axis]['set'].setValue(0)
+                    self.axesControl[axis]['home'].setStyleSheet('QPushButton {background: green}')
         return homeFunc
         
         
     def stopAll(self):
-        print('Stop all Smaract stages')
+        print('Stop all Smaract Hexapod stages')
+        self.controller.stopAll()
+        self.disconnect()
         
     def homeAll(self):
-        print('Home all Smaract stages')
+        print('Home all Smaract Hexapod stages')
+        isHomeList = []
         for axis in self.axes:
             self.home(axis)()
-        
+            isHomeList.append(self.isHome[axis])
+        if all(isHomeList):
+            self.buttonHomeAll.setStyleSheet('QPushButton {background: green}')
         
 class Executor(QThread):
     def __init__(self, function, parent = None):

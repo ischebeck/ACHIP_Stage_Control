@@ -39,18 +39,33 @@ class hexapod(multiplePV):
         self.pvList = {'x': [self.pv_X, self.pv_Xrb], 'y': [self.pv_Y, self.pv_Yrb], 'z': [self.pv_Z, self.pv_Zrb], 
                        'alpha': [self.pv_Alpha, self.pv_Alpharb], 'beta': [self.pv_Beta, self.pv_Betarb], 'gamma': [self.pv_Gamma, self.pv_Gammarb]}
         
-        self.axes = ['x', 'y', 'z', 'alpha', 'beta', 'gamma']
+        self.axes = ['x', 'y', 'z', 'pitch', 'yaw', 'roll']
+                    
+    def connect(self, axis):
+        ###
+        return True
+    
+    def disconnect(self, axis):
+        ###
+        return True
     
     def getValue(self, axis):
         def function():
             return self.pvList[axis][1].value
         return function
     
-    def setValue(self, axis):
-        def function(value):
-            self.pvList[axis][0].value = value
-        return function
+    def setValue(self, axis, value):
+        #self.pvList[axis][0].value = value
+        return 
+    
+    def isMoving(self, axis):
+        ###
+        return False
     
     def home(self, axis):
-        
+        ###
+        return True
+    
+    def stopAll(self):
+        ###
         return 
