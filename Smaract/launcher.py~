@@ -6,7 +6,7 @@ from otherWidgets import hexapodControl
 
 def hexapodWindow():
    hexa = hexapodControl('hexapodNAME')
-###
+
    hexa.show()
 
    sys.exit(app.exec_())
