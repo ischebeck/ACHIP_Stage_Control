@@ -4,7 +4,7 @@
 # PyQt4 imports
 from PyQt4.QtCore import pyqtSlot, QTimer, QThread, QSize
 from PyQt4 import uic, Qt
-import PyQt4.Gui as QtWidgets
+import PyQt4.QtGui as QtWidgets
 from PyQt4.QtGui import QSizePolicy
 from axes_canvas import AxesCanvas
 from axes_limits import AxesLimits
