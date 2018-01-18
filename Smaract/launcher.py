@@ -3,15 +3,22 @@ import sys
 usePyQt5 = True
 if usePyQt5: import PyQt5.QtWidgets as QtWidgets
 else: import PyQt4.Gui as QtWidgets
-from otherWidgets import hexapodControl
+from otherWidgets import hexapodControl, ECMControl
+from interfaces import ECM
 
-def hexapodWindow():
-   hexa = hexapodControl('hexapodNAME')
+def openWindows(ECM):
 
-   hexa.show()
+   #hexa = hexapodControl('hexapod', ECM)
+
+   #hexa.show()
+   
+   ECMW = ECMControl('ECM', ECM)
+
+   ECMW.show()
 
    sys.exit(app.exec_())
 	
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
-    hexapodWindow()
+    ECM = ECM()
+    openWindows(ECM)

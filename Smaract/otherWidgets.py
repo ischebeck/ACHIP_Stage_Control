@@ -11,7 +11,7 @@ else:
     from PyQt4.QtGui import QSizePolicy
 #from axes_canvas import AxesCanvas
 #from axes_limits import AxesLimits
-from interfaces import hexapod
+from interfaces import hexapod, ECM
 from time import time, sleep
 import numpy as np
 
@@ -47,12 +47,12 @@ class ControlWithRefresh(QtWidgets.QWidget):
 
 class hexapodControl(ControlWithRefresh):
 
-    def __init__(self, name, refresh=500, parent=None):
+    def __init__(self, name, ECM, refresh=500, parent=None):
         super().__init__(parent=parent)
         self.name = name
-        self.isConnected = {}
+        self.isConnected = False
         self.isHome = {}
-        self.controller = hexapod(self.name)
+        self.controller = hexapod(self.name, ECM)
         self.initUI()
         self.makeConnections()
         self.timer.start()
@@ -70,7 +70,6 @@ class hexapodControl(ControlWithRefresh):
                             'roll': {'pos': self.posRoll, 'set': self.setRoll, 'setStep': self.setStepRoll, 'home': self.homeRoll}} 
            
         for axis in self.axes:
-            self.isConnected[axis] = False
             self.isHome[axis] = False
             self.axesControl[axis]['home'].clicked.connect(self.home(axis))
         
@@ -82,9 +81,8 @@ class hexapodControl(ControlWithRefresh):
     def makeConnections(self):
         for axis in self.axes:
             self.axesControl[axis]['setStep'].valueChanged.connect(self.axesControl[axis]['set'].setSingleStep)
-            self.axesControl[axis]['set'].valueChanged.connect(self.setValue(axis))
+            self.axesControl[axis]['set'].valueChanged.connect(self.set6d())
             
-    
     def refresh(self):
         '''
         A function that reads the machine and updates the values
@@ -92,7 +90,7 @@ class hexapodControl(ControlWithRefresh):
                 
         for axis in self.axes:
             
-            if self.isConnected[axis]:
+            if self.isConnected:
                 # position needs to be read from controller
                 self.axesControl[axis]['pos'].setText(str(np.round(self.axesControl[axis]['set'].value(), 3)))
                 pass
@@ -100,19 +98,16 @@ class hexapodControl(ControlWithRefresh):
                 self.axesControl[axis]['pos'].setStyleSheet('QLabel {background: orange}')
             else:
                 self.axesControl[axis]['pos'].setStyleSheet('QLabel {background:}')
-            
-    
+                
     def connect(self):
-        isConnectedList = [] 
-        for axis in self.axes:
-            self.isConnected[axis] = self.controller.connect(axis)
-            isConnectedList.append(self.isConnected[axis])
-        if all(isConnectedList):
+        isConnected = self.controller.connect()
+        if isConnected:
             self.buttonConnect.setStyleSheet('QPushButton {background: green}')         
             
     def disconnect(self):
+        self.controller.disconnect()
+        self.isConnected = False
         for axis in self.axes:
-            self.isConnected[axis] = not(self.controller.disconnect(axis))
             self.isHome[axis] = False
             self.axesControl[axis]['home'].setStyleSheet('QPushButton {background: }')
             self.axesControl[axis]['pos'].setText('not connected')
@@ -128,9 +123,12 @@ class hexapodControl(ControlWithRefresh):
         self.axesControl[axis]['set'].setEnabled(True)        
         self.axesControl[axis]['setStep'].setEnabled(True)
       
-    def setValue(self, axis):
+    def set6d(self):
         def function(value):
-            self.controller.setValue(axis, value)
+            pos = []
+            for axis in self.axes:
+                pos.append(self.axesControl[axis]['set'].value())
+            self.controller.set6d(pos)
         return function
         
     def home(self, axis):
@@ -159,6 +157,52 @@ class hexapodControl(ControlWithRefresh):
             isHomeList.append(self.isHome[axis])
         if all(isHomeList):
             self.buttonHomeAll.setStyleSheet('QPushButton {background: green}')
+        
+class ECMControl(ControlWithRefresh):
+
+    def __init__(self, name, ECM, refresh=500, parent=None):
+        super().__init__(parent=parent)
+        self.ECM = ECM
+        self.isConnected = False
+        self.initUI()
+        self.makeConnections()
+        self.timer.start()
+        self.setWindowTitle('ECM Control')
+        
+    def initUI(self):
+        uic.loadUi('ui/ECM.ui', self)
+
+        self.buttonConnect.clicked.connect(self.connect)
+        self.buttonDisconnect.clicked.connect(self.disconnect)
+        self.buttonSend.clicked.connect(self.send)
+        
+    def makeConnections(self):
+        return 
+
+    def refresh(self):
+        '''
+        A function that reads the machine and updates the values
+        '''
+        return 
+                        
+    def connect(self):
+        isConnected = self.ECM.connect()
+        if isConnected:
+            self.buttonConnect.setStyleSheet('QPushButton {background: green}')         
+            
+    def disconnect(self):
+        self.ECM.disconnect()
+        self.isConnected = False
+        
+        self.buttonConnect.setStyleSheet('QPushButton {background: }')
+
+    def send(self):
+        cmd = self.input.text()
+        self.ECM.sendRaw(cmd)
+        self.updateOutput()
+        
+    def updateOutput(self):
+        self.output.setText(self.ECM.ret)
         
 class Executor(QThread):
     def __init__(self, function, parent = None):
