@@ -8,9 +8,9 @@ from interfaces import ECM
 
 def openWindows(ECM):
 
-   #hexa = hexapodControl('hexapod', ECM)
+   hexa = hexapodControl('hexapod', ECM)
 
-   #hexa.show()
+   hexa.show()
    
    ECMW = ECMControl('ECM', ECM)
 

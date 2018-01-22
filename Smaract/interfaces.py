@@ -7,36 +7,37 @@ class ECM():
         '''TODO: add limits for setting'''
         self.TCP_IP = '129.129.217.74'
         self.TCP_PORT = 2000
-        self.soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.ret = '' # last return message
+        self.isConnected = False
                         
     def connect(self):
+        self.soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.soc.connect((self.TCP_IP, self.TCP_PORT))
+        self.isConnected = True
         return True
 
     def disconnect(self):
         self.soc.close()
+        self.isConnected = True
         return True
         
     def sendRaw(self, cmd):
         self.soc.send(bytes((cmd+'\n').encode()))  
         self.ret = self.soc.recv(4096).decode('UTF-8')
+        return self.ret
         
-        if self.ret == '!0': 
+    def setUnit(self, unit):
+        cmd = '%unit '+str(unit)
+        self.sendRaw(cmd)
+        return self.ret
+    
+    def send(self, unit, cmd):
+        self.setUnit(unit)
+        if self.ret == '!0\r\n': 
+            self.sendRaw(cmd)
             return True
         else:
             return False
-
-    def setUnit(self, unit):
-        cmd = '%unit '+str(unit)
-        ret = self.sendRaw(cmd)
-        return ret
-    
-    def send(self, unit, cmd):
-        ret = self.setUnit(unit)
-        if ret:
-            ret = self.sendRaw(cmd)
-        return ret
     
 class hexapod():
 
@@ -48,36 +49,54 @@ class hexapod():
         self.unit = '1'
     
     def connect(self):
-        ret = ECM.sendRaw('%activate-unit '+self.unit)    
-        return ret
+        self.ECM.sendRaw('%unit-activated? '+self.unit)
+        if self.ECM.ret == '0\r\n':
+            self.ECM.sendRaw('%activate-unit '+self.unit)    
+            return self.ret
+        return True
     
     def disconnect(self):
-        ret = ECM.sendRaw('%deactivate-unit '+self.unit)    
-        return ret
+        self.ECM.sendRaw('%unit-activated? '+self.unit)
+        if self.ECM.ret == '1\r\n':
+            self.ECM.sendRaw('%deactivate-unit '+self.unit)    
+            return self.ret
+        return True
 
     def send(self, cmd):
-        ECM.send(self.unit, cmd)
+        return self.ECM.send(self.unit, cmd)
     
-    def getValue(self, axis):
+    def get6d(self, axis):
+        cmd = 'pos?'
+        self.send(cmd)
+        pos = self.ret
+        print(pos)
         
-        return 
-
     def set6d(self, pos):
         # pos contains all 6 target coordinates ['x', 'y', 'z', 'pitch', 'yaw', 'roll']
         cmd = 'mov '
         for c in pos:
-            cmd+= str(pos)+' '
+            cmd+= str(c)+' '
+        return self.send(cmd)
+         
+    def isMoving(self):
+        cmd = 'mst?'
         self.send(cmd)
-        return 
-        
-    def isMoving(self, axis):
-        ###
+        if self.ECM.ret == '2\r\n':
+            return True
         return False
     
-    def home(self, axis):
-        ###
-        return True
-    
+    def isHome(self):
+        cmd = 'ref?'
+        self.send(cmd)
+        if self.ECM.ret == '1\r\n':
+            return True
+        return False
+
+    def home(self):
+        cmd = 'ref'
+        return self.send(cmd)
+
     def stopAll(self):
-        ###
-        return 
+        cmd = 'stop'
+        return self.send(cmd)
+         

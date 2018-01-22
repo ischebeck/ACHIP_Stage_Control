@@ -1,0 +1,5 @@
+<RCC>
+  <qresource prefix="hexapod">
+    <file>hexapod.jpg</file>
+  </qresource>
+</RCC>
