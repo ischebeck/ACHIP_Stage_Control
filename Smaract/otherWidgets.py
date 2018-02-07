@@ -3,11 +3,11 @@ if usePyQt5:
     from PyQt5.QtCore import pyqtSlot, QTimer, QThread, QSize
     from PyQt5 import uic, Qt
     import PyQt5.QtWidgets as QtWidgets
-    from PyQt5.QtWidgets import QSizePolicy, QMessageBox
+    from PyQt5.QtWidgets import QSizePolicy, QMessageBox, QInputDialog, QLineEdit
 else:
     from PyQt4.QtCore import pyqtSlot, QTimer, QThread, QSize
     from PyQt4 import uic, Qt
-    import PyQt4.QtGui as QtWidgets, QMessageBox
+    import PyQt4.QtGui as QtWidgets, QMessageBox, QInputDialog, QLineEdit
     from PyQt4.QtGui import QSizePolicy
 #from axes_canvas import AxesCanvas
 #from axes_limits import AxesLimits
@@ -99,7 +99,9 @@ class ECMControl(ControlWithRefresh):
     def openControls(self, name):
         if self.isConnected:
             if name in self.devices:
+                self.closeAllControls()
                 self.devices[name].isConnected = True
+                self.devices[name].settings()
                 self.devices[name].show()
             else:
                 print(name, ' not found')
@@ -111,6 +113,11 @@ class ECMControl(ControlWithRefresh):
         else:
             print(name, ' not found')
             
+    def closeAllControls(self):
+        for name in self.devices:
+            if self.devices[name].isConnected:
+                self.closeControls(name)
+                
     def send(self):
         cmd = self.input.text()
         self.ECM.sendRaw(cmd)
@@ -158,7 +165,8 @@ class hexapodControl(ControlWithRefresh):
     def makeConnections(self):
         self.bStop.clicked.connect(self.stopAll)
         self.bHomeAll.clicked.connect(self.homeAll)
-                
+        self.bPivot.clicked.connect(self.setPivot)    
+        
         for axis in self.axes:
             self.axesControl[axis]['setStep'].valueChanged.connect(self.axesControl[axis]['set'].setSingleStep)
             self.axesControl[axis]['go'].clicked.connect(self.goToSetPos(axis))
@@ -167,10 +175,11 @@ class hexapodControl(ControlWithRefresh):
             
     def refresh(self): 
         if self.isConnected:
-            pos = self.controller.get6d()
+            posRead = self.controller.get6d()
             self.isMoving = self.controller.isMoving()
+            self.isHome = self.controller.isHome()
             for i, axis in enumerate(self.axesForECM):
-                self.pos[axis] = pos[i]
+                self.pos[axis] = posRead[i]
 
            
             posRounded = self.posRound()
@@ -181,6 +190,11 @@ class hexapodControl(ControlWithRefresh):
                 self.labelStatus.setStyleSheet('QLabel {background: yellow}')
             else:
                 self.labelStatus.setStyleSheet('QLabel {background: green}')
+                
+            if self.isHome:
+                self.bHomeAll.setStyleSheet('QPushButton {background: }')
+            if not self.isHome:
+                self.bHomeAll.setStyleSheet('QPushButton {background: red}')
 
     def posRound(self):
         posRounded = {}
@@ -191,7 +205,10 @@ class hexapodControl(ControlWithRefresh):
                 posRounded[axis] = self.pos[axis]
         
         return posRounded
-                      
+
+    def settings(self): 
+        self.controller.setFrq(self.controller.stdFrq)
+                   
     def stopAll(self):
         print('Stop all Smaract Hexapod stages')
         try:
@@ -218,7 +235,7 @@ class hexapodControl(ControlWithRefresh):
         
     def makeStep(self, axis, sign):
         def function():
-            self.posTarget[axis] += sign * self.axesControl[axis]['setStep'].value()
+            self.posTarget[axis] = float(self.pos[axis])/self.unitConversion[axis] + sign * self.axesControl[axis]['setStep'].value()
             self.set6d()
         return function
             
@@ -228,6 +245,24 @@ class hexapodControl(ControlWithRefresh):
             self.set6d()
         return function
     
+    def setPivot(self):
+        text, okPressed = QInputDialog.getText(self, 'Pivot Point', 'Format: x, y, z [um]', QLineEdit.Normal, '')
+        if okPressed and text != '':
+            try:
+                piv = dict(zip(self.axes[:3], np.array(text.split(','), dtype = float)))
+            except:
+                print('wrong input format')
+            
+            if len(piv) == 3:
+                pivECM = []
+                for axis in self.axesForECM[:3]:
+                    pivECM.append(piv[axis] * self.unitConversion[axis])
+                success = self.controller.setPivot(pivECM)
+                if success:
+                    print('Pivot set to: ', piv)
+            else:
+                print('wrong input format')
+            
     def closeEvent(self, event):
         self.isConnected = False
         event.accept()
@@ -275,11 +310,11 @@ class linearControl(ControlWithRefresh):
         self.axesControl = {}
         for axis in self.axes:
             if axis == 'x' or axis == 'v' : 
-                self.axesControl[axis] = {'pos': self.posX, 'set': self.setX, 'setStep': self.setStepX, 'go': self.bGoX, 'sL': self.bXL, 'sR': self.bXR, 'home': self.bHomeX, 'labelHome': self.labelHomeX, 'stop': self.bStopX} 
+                self.axesControl[axis] = {'pos': self.posX, 'set': self.setX, 'setStep': self.setStepX, 'go': self.bGoX, 'sL': self.bXL, 'sR': self.bXR, 'home': self.bHomeX, 'stop': self.bStopX} 
             if axis == 'y':     
-                self.axesControl[axis] = {'pos': self.posY, 'set': self.setY, 'setStep': self.setStepY, 'go': self.bGoY, 'sL': self.bYL, 'sR': self.bYR, 'home': self.bHomeY, 'labelHome': self.labelHomeY, 'stop': self.bStopY}
+                self.axesControl[axis] = {'pos': self.posY, 'set': self.setY, 'setStep': self.setStepY, 'go': self.bGoY, 'sL': self.bYL, 'sR': self.bYR, 'home': self.bHomeY, 'stop': self.bStopY}
             if axis == 'z':     
-                self.axesControl[axis] = {'pos': self.posZ, 'set': self.setZ, 'setStep': self.setStepZ, 'go': self.bGoZ, 'sL': self.bZL, 'sR': self.bZR, 'home': self.bHomeZ, 'labelHome': self.labelHomeZ, 'stop': self.bStopZ}
+                self.axesControl[axis] = {'pos': self.posZ, 'set': self.setZ, 'setStep': self.setStepZ, 'go': self.bGoZ, 'sL': self.bZL, 'sR': self.bZR, 'home': self.bHomeZ, 'stop': self.bStopZ}
             
     def makeConnections(self):
         self.bStopAll.clicked.connect(self.stopAll)
@@ -301,19 +336,25 @@ class linearControl(ControlWithRefresh):
                 
             posRounded = self.posRound()
             for axis in self.axes:
-                self.axesControl[axis]['pos'].setText(posRounded[axis])
                 
-                if self.movState[axis] == '0':
-                    self.axesControl[axis]['pos'].setStyleSheet('QLabel {background: }')                
-                if self.movState[axis] == '4':
-                    self.axesControl[axis]['pos'].setStyleSheet('QLabel {background: yellow}')
-                if self.movState[axis] == '7':
+                self.axesControl[axis]['pos'].setText(posRounded[axis])
+                posDiff = abs(float(self.posTarget[axis]) - float(posRounded[axis]))
+                
+                if self.movState[axis] == '3': #holding
+                    if posDiff >= 0.01:
+                        self.axesControl[axis]['pos'].setStyleSheet('QLabel {background: yellow}')    
+                    if posDiff < 0.01:
+                        self.axesControl[axis]['pos'].setStyleSheet('QLabel {background: }')    
+                
+                if self.movState[axis] == '0': #stopped
+                    self.axesControl[axis]['pos'].setStyleSheet('QLabel {background: red}')
+                if self.movState[axis] == '7': #homing
                     self.axesControl[axis]['pos'].setStyleSheet('QLabel {background: orange}')
                                
                 if self.isHome[axis]:
-                    self.axesControl[axis]['labelHome'].setStyleSheet('QLabel {background: }')
+                    self.axesControl[axis]['home'].setStyleSheet('QPushButton {background: }')
                 if not self.isHome[axis]:
-                    self.axesControl[axis]['labelHome'].setStyleSheet('QLabel {background: red}')
+                    self.axesControl[axis]['home'].setStyleSheet('QPushButton {background: red}')
                     
     def posRound(self):
         posRounded = {}
@@ -324,15 +365,21 @@ class linearControl(ControlWithRefresh):
                 posRounded[axis] = self.pos[axis]
         
         return posRounded
-                    
+    
+    def settings(self): 
+        for ch in self.chForECM:
+            self.controller.setFrq(ch, self.controller.stdFrq)               
+    
     def home(self, axis):
         def function():
             reply = QMessageBox.question(self, 'Confirmation', 'Start Homing '+self.name+' '+axis+'?', QMessageBox.Yes, QMessageBox.No)
             if reply == QMessageBox.Yes:
                 
                 print('Home Smaract '+self.name+' ' + axis)
-                self.controller.home(self.chForECM[axis])
-    
+                if axis == 'z':
+                    self.controller.home(self.chForECM[axis], autoZero = False)
+                else:
+                    self.controller.home(self.chForECM[axis], autoZero = True)
         return function
         
     def stop(self, axis):
@@ -350,12 +397,11 @@ class linearControl(ControlWithRefresh):
                 print('Could not stop '+self.name+' '+axis+'. Check connection!')
     
     def setPos(self, axis): 
-        pos = self.unitConversion[axis]*self.posTarget[axis]
-        self.controller.setPos(self.chForECM[axis], pos)
+        self.controller.setPos(self.chForECM[axis], self.unitConversion[axis]*self.posTarget[axis])
         
     def makeStep(self, axis, sign):
         def function():
-            self.posTarget[axis] += sign * self.axesControl[axis]['setStep'].value()
+            self.posTarget[axis] = float(self.pos[axis])/self.unitConversion[axis] + sign * self.axesControl[axis]['setStep'].value()
             self.setPos(axis)
         return function
             

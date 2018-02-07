@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>quadrupoleControl</class>
- <widget class="QWidget" name="quadrupoleControl">
+ <class>hexapodControl</class>
+ <widget class="QWidget" name="hexapodControl">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>2188</width>
-    <height>428</height>
+    <width>2212</width>
+    <height>449</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -25,6 +25,9 @@
   <layout class="QGridLayout" name="gridLayout_2">
    <item row="0" column="6">
     <layout class="QGridLayout" name="gridAngular">
+     <property name="sizeConstraint">
+      <enum>QLayout::SetNoConstraint</enum>
+     </property>
      <item row="1" column="2">
       <widget class="QDoubleSpinBox" name="setStepPitch">
        <property name="sizePolicy">
@@ -690,6 +693,24 @@
        </property>
        <property name="text">
         <string>HOME HEXAPOD</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="bPivot">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>SET PIVOT POINT</string>
        </property>
       </widget>
      </item>

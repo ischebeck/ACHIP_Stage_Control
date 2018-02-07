@@ -28,8 +28,11 @@ class ECM():
         
     def sendRaw(self, cmd):
         if self.isConnected:
-            self.soc.send(bytes((cmd+'\n').encode()))  
-            self.ret = self.soc.recv(4096).decode('UTF-8')
+            try:
+                self.soc.send(bytes((cmd+'\n').encode()))  
+                self.ret = self.soc.recv(4096).decode('UTF-8')
+            except:
+                print('ECM Communication Error')
         else:
             print('Check ECM connection.')
             
@@ -57,6 +60,7 @@ class hexapod():
         self.mainName = name
         self.ECM = ECM
         self.unit = '1'
+        self.stdFrq = 5000
         
     def connect(self):
         self.ECM.sendRaw('%unit-activated? '+self.unit)
@@ -89,10 +93,21 @@ class hexapod():
         if self.isPosReachable(pos):
             cmd = 'mov '
             for c in pos:
-                cmd+= str(c)+' '
+                cmd += str(c)+' '
             return self.send(cmd)
         else:
             return False
+
+    def setPivot(self, piv):
+        # piv contains all 3 pivot coordinates
+        cmd = 'piv '
+        for c in piv:
+            cmd += str(c)+' '
+        return self.send(cmd)        
+    
+    def setFrq(self, f):
+        cmd = 'frq ' + str(f)
+        return self.send(cmd)
         
     def isPosReachable(self, pos):
         # pos contains all 6 target coordinates
@@ -135,7 +150,7 @@ class l3():
         self.mainName = name
         self.ECM = ECM
         self.unit = '0'
-        self.channels = ['0', '1', '2']
+        self.stdFrq = 5000
         
     def connect(self):
         self.ECM.sendRaw('%unit-activated? '+self.unit)
@@ -153,6 +168,10 @@ class l3():
 
     def send(self, cmd):
         return self.ECM.send(self.unit, cmd)
+        
+    def setFrq(self, ch, f):
+        cmd = 'frq ' + str(ch) + ' ' + str(f)
+        return self.send(cmd)
         
     def getPos(self, ch):
         cmd = 'pos? ' + str(ch)

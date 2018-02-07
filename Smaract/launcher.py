@@ -6,7 +6,7 @@ else: import PyQt4.Gui as QtWidgets
 from otherWidgets import hexapodControl, ECMControl, linearControl
 from interfaces import ECM
 
-def openWindows(ECM):
+def openWindow(ECM):
  
    ECMW = ECMControl('ECM', ECM)
    hexa = hexapodControl('hexapod', ECM)
@@ -26,4 +26,4 @@ def openWindows(ECM):
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     ECM = ECM()
-    openWindows(ECM)
+    openWindow(ECM)
