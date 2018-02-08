@@ -7,13 +7,14 @@ if usePyQt5:
 else:
     from PyQt4.QtCore import pyqtSlot, QTimer, QThread, QSize
     from PyQt4 import uic, Qt
-    import PyQt4.QtGui as QtWidgets, QMessageBox, QInputDialog, QLineEdit
-    from PyQt4.QtGui import QSizePolicy
+    import PyQt4.QtGui as QtWidgets
+    from PyQt4.QtGui import QSizePolicy, QMessageBox, QInputDialog, QLineEdit
 #from axes_canvas import AxesCanvas
 #from axes_limits import AxesLimits
 from interfaces import hexapod, ECM, l3
 from time import time, sleep
 import numpy as np
+from storage import *
 
 '''
 NOTE:
@@ -155,9 +156,9 @@ class hexapodControl(ControlWithRefresh):
     
     def initUI(self):
         uic.loadUi('ui/hexapod.ui', self)
-        self.axesControl = {'x': {'pos': self.posX, 'set': self.setX, 'setStep': self.setStepX, 'go': self.bGoX, 'sL': self.bXL, 'sR': self.bXR}, 
-                            'y': {'pos': self.posY, 'set': self.setY, 'setStep': self.setStepY, 'go': self.bGoY, 'sL': self.bYL, 'sR': self.bYR}, 
-                            'z': {'pos': self.posZ, 'set': self.setZ, 'setStep': self.setStepZ, 'go': self.bGoZ, 'sL': self.bZL, 'sR': self.bZR}, 
+        self.axesControl = {'x': {'pos': self.posX, 'set': self.setX, 'setStep': self.setStepX, 'go': self.bGoX, 'sL': self.bXL, 'sR': self.bXR, 'piv': self.pivotX}, 
+                            'y': {'pos': self.posY, 'set': self.setY, 'setStep': self.setStepY, 'go': self.bGoY, 'sL': self.bYL, 'sR': self.bYR, 'piv': self.pivotY}, 
+                            'z': {'pos': self.posZ, 'set': self.setZ, 'setStep': self.setStepZ, 'go': self.bGoZ, 'sL': self.bZL, 'sR': self.bZR, 'piv': self.pivotZ}, 
                             'pitch': {'pos': self.posPitch, 'set': self.setPitch, 'setStep': self.setStepPitch, 'go': self.bGoRX, 'sL': self.bRXL, 'sR': self.bRXR}, 
                             'yaw': {'pos': self.posYaw, 'set': self.setYaw, 'setStep': self.setStepYaw, 'go': self.bGoRY, 'sL': self.bRYL, 'sR': self.bRYR}, 
                             'roll': {'pos': self.posRoll, 'set': self.setRoll, 'setStep': self.setStepRoll, 'go': self.bGoRZ, 'sL': self.bRZL, 'sR': self.bRZR}} 
@@ -165,7 +166,9 @@ class hexapodControl(ControlWithRefresh):
     def makeConnections(self):
         self.bStop.clicked.connect(self.stopAll)
         self.bHomeAll.clicked.connect(self.homeAll)
-        self.bPivot.clicked.connect(self.setPivot)    
+        self.bLoad.clicked.connect(self.load)
+        self.bSave.clicked.connect(self.save)
+        self.bSetPivot.clicked.connect(self.setPivot)    
         
         for axis in self.axes:
             self.axesControl[axis]['setStep'].valueChanged.connect(self.axesControl[axis]['set'].setSingleStep)
@@ -195,7 +198,7 @@ class hexapodControl(ControlWithRefresh):
                 self.bHomeAll.setStyleSheet('QPushButton {background: }')
             if not self.isHome:
                 self.bHomeAll.setStyleSheet('QPushButton {background: red}')
-
+    
     def posRound(self):
         posRounded = {}
         for axis in self.axes:
@@ -246,23 +249,35 @@ class hexapodControl(ControlWithRefresh):
         return function
     
     def setPivot(self):
-        text, okPressed = QInputDialog.getText(self, 'Pivot Point', 'Format: x, y, z [um]', QLineEdit.Normal, '')
-        if okPressed and text != '':
-            try:
-                piv = dict(zip(self.axes[:3], np.array(text.split(','), dtype = float)))
-            except:
-                print('wrong input format')
+        pivECM = []
+        for axis in self.axesForECM[:3]:
+            pivECM.append(self.axesControl[axis]['piv'].value() * self.unitConversion[axis])
+        success = self.controller.setPivot(pivECM)
+        if success:
+            print('Pivot set.')
             
-            if len(piv) == 3:
-                pivECM = []
-                for axis in self.axesForECM[:3]:
-                    pivECM.append(piv[axis] * self.unitConversion[axis])
-                success = self.controller.setPivot(pivECM)
-                if success:
-                    print('Pivot set to: ', piv)
-            else:
-                print('wrong input format')
-            
+    def getPivot(self):
+        #to be implemented
+        return             
+    
+    def save(self):
+        path = getFileSave()
+        if path != '':
+            s = Storage(path, 'test')
+            for axis in self.axes:
+                s.addData(self.name, axis, float(self.pos[axis])/self.unitConversion[axis], unit = 'um')
+            #for axis in self.axes[:3]:
+                #s.addData(self.name, 'piv'+axis, )
+                
+    def load(self):
+        path = getFileOpen()
+        if path != '':
+            s = StorageRead(path)
+            for axis in self.axes:
+                val = s.getData(self.name, axis)
+                if val != None:
+                    self.axesControl[axis]['set'].setValue(val)
+                    
     def closeEvent(self, event):
         self.isConnected = False
         event.accept()

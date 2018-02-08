@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 import sys
 usePyQt5 = True
-if usePyQt5: import PyQt5.QtWidgets as QtWidgets
-else: import PyQt4.Gui as QtWidgets
+if usePyQt5: 
+    import PyQt5.QtWidgets as QtWidgets
+else: 
+    import PyQt4.QtGui as QtWidgets
 from otherWidgets import hexapodControl, ECMControl, linearControl
 from interfaces import ECM
 
