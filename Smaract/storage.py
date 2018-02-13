@@ -9,8 +9,8 @@ import numpy as np
 from PyQt5.QtWidgets import QFileDialog
 
 def getFileSave():
-    return QFileDialog.getSaveFileName(None, 'Select Folder', os.getcwd())[0]
-
+    return QFileDialog.getSaveFileName(None, 'Select Folder', os.getcwd(), options = QFileDialog.DontConfirmOverwrite)[0]
+   
 def getFileOpen():
     return QFileDialog.getOpenFileName(None, 'Select Folder', os.getcwd())[0]
 
@@ -63,5 +63,10 @@ class StorageRead:
             else: 
                 print(name, ' not found.')
                 return None
-        
-s = StorageRead(r'C:\Users\hermann_b\Desktop\test2\h.hdf5')
+    
+    def close(self):
+       self.File.close()     
+       
+       
+       
+#s = StorageRead(r'C:\Users\hermann_b\Desktop\test\test.hdf5')

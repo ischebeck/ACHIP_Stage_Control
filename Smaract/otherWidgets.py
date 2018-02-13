@@ -11,7 +11,7 @@ else:
     from PyQt4.QtGui import QSizePolicy, QMessageBox, QInputDialog, QLineEdit
 #from axes_canvas import AxesCanvas
 #from axes_limits import AxesLimits
-from interfaces import hexapod, ECM, l3
+from interfaces import hexapod, ECM, smaractLinear
 from time import time, sleep
 import numpy as np
 from storage import *
@@ -64,6 +64,9 @@ class ECMControl(ControlWithRefresh):
         self.bConnect.clicked.connect(self.connect)
         self.bDisconnect.clicked.connect(self.disconnect)
         self.bSend.clicked.connect(self.send)
+        self.bLoad.clicked.connect(lambda: self.load(path=''))
+        self.bSave.clicked.connect(lambda: self.save(path=''))
+        self.bSetAll.clicked.connect(self.setAll)
         self.bStartHexapod.clicked.connect(lambda: self.openControls('hexapod'))
         self.bCloseHexapod.clicked.connect(lambda: self.closeControls('hexapod'))
         self.bStartL1.clicked.connect(lambda: self.openControls('l1'))
@@ -129,6 +132,28 @@ class ECMControl(ControlWithRefresh):
               
     def addDeviceControl(self, name, dev):
         self.devices[name] = dev
+    
+    def save(self, path = ''):
+        if path == '':
+            path = getFileSave()
+        if path != '':
+            for name in self.devices:
+                self.devices[name].save(path = path)
+
+    def load(self, path = ''):
+        if path == '':
+            path = getFileOpen()
+        if path != '':
+            for name in self.devices:
+                self.devices[name].load(path = path)
+            
+    def setAll(self):
+        for name in self.devices:
+            self.devices[name].setAll()
+                
+    def closeEvent(self, event):
+        self.disconnect()
+        event.accept()
             
 class hexapodControl(ControlWithRefresh):
 
@@ -139,19 +164,20 @@ class hexapodControl(ControlWithRefresh):
         self.controller = hexapod(self.name, ECM)
         self.isHome = False
         self.ECM = ECM
-        self.axes = ['x', 'y', 'z', 'pitch', 'yaw', 'roll']
-        self.axesForECM = ['z', 'x', 'y', 'roll', 'pitch', 'yaw']
-        self.unitConversion = {'x': -1e-6, 'y': 1e-6, 'z': -1e-6, 'pitch': -1., 'yaw': 1., 'roll': -1.}
+        self.axes = ['x', 'y', 'z', 'rx', 'ry', 'rz']
+        self.axesForECM = ['z', 'x', 'y', 'rz', 'rx', 'ry']
+        self.unitConversion = {'x': -1e-6, 'y': 1e-6, 'z': -1e-6, 'rx': -1., 'ry': 1., 'rz': -1.}
         self.initUI()
         self.makeConnections()
         self.timer.start()
         self.setWindowTitle('Hexapod Control')
         
         self.pos = {}
+        self.piv = {}
         self.posTarget = {}
         self.isConnected = False
         for axis in self.axes:
-            self.pos[axis] = 'disconnected'
+            self.pos[axis] = None
             self.posTarget[axis] = 0.
     
     def initUI(self):
@@ -159,16 +185,17 @@ class hexapodControl(ControlWithRefresh):
         self.axesControl = {'x': {'pos': self.posX, 'set': self.setX, 'setStep': self.setStepX, 'go': self.bGoX, 'sL': self.bXL, 'sR': self.bXR, 'piv': self.pivotX}, 
                             'y': {'pos': self.posY, 'set': self.setY, 'setStep': self.setStepY, 'go': self.bGoY, 'sL': self.bYL, 'sR': self.bYR, 'piv': self.pivotY}, 
                             'z': {'pos': self.posZ, 'set': self.setZ, 'setStep': self.setStepZ, 'go': self.bGoZ, 'sL': self.bZL, 'sR': self.bZR, 'piv': self.pivotZ}, 
-                            'pitch': {'pos': self.posPitch, 'set': self.setPitch, 'setStep': self.setStepPitch, 'go': self.bGoRX, 'sL': self.bRXL, 'sR': self.bRXR}, 
-                            'yaw': {'pos': self.posYaw, 'set': self.setYaw, 'setStep': self.setStepYaw, 'go': self.bGoRY, 'sL': self.bRYL, 'sR': self.bRYR}, 
-                            'roll': {'pos': self.posRoll, 'set': self.setRoll, 'setStep': self.setStepRoll, 'go': self.bGoRZ, 'sL': self.bRZL, 'sR': self.bRZR}} 
+                            'rx': {'pos': self.posRX, 'set': self.setRX, 'setStep': self.setStepRX, 'go': self.bGoRX, 'sL': self.bRXL, 'sR': self.bRXR}, 
+                            'ry': {'pos': self.posRY, 'set': self.setRY, 'setStep': self.setStepRY, 'go': self.bGoRY, 'sL': self.bRYL, 'sR': self.bRYR}, 
+                            'rz': {'pos': self.posRZ, 'set': self.setRZ, 'setStep': self.setStepRZ, 'go': self.bGoRZ, 'sL': self.bRZL, 'sR': self.bRZR}} 
         
     def makeConnections(self):
         self.bStop.clicked.connect(self.stopAll)
         self.bHomeAll.clicked.connect(self.homeAll)
-        self.bLoad.clicked.connect(self.load)
-        self.bSave.clicked.connect(self.save)
+        self.bLoad.clicked.connect(lambda: self.load(path=''))
+        self.bSave.clicked.connect(lambda: self.save(path=''))
         self.bSetPivot.clicked.connect(self.setPivot)    
+        self.bSetAll.clicked.connect(self.setAll)
         
         for axis in self.axes:
             self.axesControl[axis]['setStep'].valueChanged.connect(self.axesControl[axis]['set'].setSingleStep)
@@ -176,16 +203,15 @@ class hexapodControl(ControlWithRefresh):
             self.axesControl[axis]['sL'].clicked.connect(self.makeStep(axis, -1.))
             self.axesControl[axis]['sR'].clicked.connect(self.makeStep(axis, 1.))
             
+    def readValues(self):
+        self.isMoving = self.controller.isMoving()
+        self.isHome = self.controller.isHome()
+        self.get6d()
+          
     def refresh(self): 
         if self.isConnected:
-            posRead = self.controller.get6d()
-            self.isMoving = self.controller.isMoving()
-            self.isHome = self.controller.isHome()
-            for i, axis in enumerate(self.axesForECM):
-                self.pos[axis] = posRead[i]
-
-           
-            posRounded = self.posRound()
+            self.readValues()
+            posRounded = self.posRound(self.pos)
             
             for axis in self.axes:
                 self.axesControl[axis]['pos'].setText(posRounded[axis])
@@ -199,19 +225,22 @@ class hexapodControl(ControlWithRefresh):
             if not self.isHome:
                 self.bHomeAll.setStyleSheet('QPushButton {background: red}')
     
-    def posRound(self):
+    def posRound(self, pos):
         posRounded = {}
-        for axis in self.axes:
+        for axis in pos:
             try:
-                posRounded[axis] = str(np.round(float(self.pos[axis])/self.unitConversion[axis], 2))
+                posRounded[axis] = str(np.round(float(pos[axis])/self.unitConversion[axis], 2))
             except:
-                posRounded[axis] = self.pos[axis]
+                posRounded[axis] = pos[axis]
         
         return posRounded
 
     def settings(self): 
         self.controller.setFrq(self.controller.stdFrq)
-                   
+        pivRounded = self.getPivot()
+        for axis in self.axes[:3]:
+            self.axesControl[axis]['piv'].setValue(float(pivRounded[axis]))
+                       
     def stopAll(self):
         print('Stop all Smaract Hexapod stages')
         try:
@@ -230,6 +259,11 @@ class hexapodControl(ControlWithRefresh):
             else:
                 self.bHomeAll.setStyleSheet('QPushButton {background: red}')
               
+    def get6d(self):
+        posRead = self.controller.get6d()
+        for i, axis in enumerate(self.axesForECM):
+            self.pos[axis] = posRead[i]
+            
     def set6d(self): 
         pos = []
         for axis in self.axesForECM:
@@ -247,6 +281,12 @@ class hexapodControl(ControlWithRefresh):
             self.posTarget[axis] = self.axesControl[axis]['set'].value()
             self.set6d()
         return function
+
+    def getPivot(self):
+        pivRead = self.controller.getPivot()
+        for i, axis in enumerate(self.axesForECM[:3]):
+            self.piv[axis] = pivRead[i]
+        return self.posRound(self.piv)  
     
     def setPivot(self):
         pivECM = []
@@ -255,29 +295,42 @@ class hexapodControl(ControlWithRefresh):
         success = self.controller.setPivot(pivECM)
         if success:
             print('Pivot set.')
-            
-    def getPivot(self):
-        #to be implemented
-        return             
-    
-    def save(self):
-        path = getFileSave()
+
+    def setAll(self):
+        self.setPivot()
+        for axis in self.axes:
+            self.goToSetPos(axis)()
+                   
+    def save(self, path = ''):
+        if path == '':
+            path = getFileSave()
         if path != '':
             s = Storage(path, 'test')
+            self.getPivot()
+            self.readValues()
             for axis in self.axes:
-                s.addData(self.name, axis, float(self.pos[axis])/self.unitConversion[axis], unit = 'um')
-            #for axis in self.axes[:3]:
-                #s.addData(self.name, 'piv'+axis, )
-                
-    def load(self):
-        path = getFileOpen()
+                if self.pos[axis] != None: 
+                    s.addData(self.name, axis, float(self.pos[axis])/self.unitConversion[axis], unit = 'um')
+            for axis in self.axes[:3]:
+                if self.piv[axis] != None: 
+                    s.addData(self.name, 'piv'+axis, float(self.piv[axis])/self.unitConversion[axis], unit = 'um')
+            s.close()
+            
+    def load(self, path = ''):
+        if path == '':
+            path = getFileOpen()
         if path != '':
             s = StorageRead(path)
             for axis in self.axes:
                 val = s.getData(self.name, axis)
                 if val != None:
                     self.axesControl[axis]['set'].setValue(val)
-                    
+            for axis in self.axes[:3]:
+                piv = s.getData(self.name, 'piv'+axis)
+                if piv != None:
+                    self.axesControl[axis]['piv'].setValue(piv)
+            s.close()
+    
     def closeEvent(self, event):
         self.isConnected = False
         event.accept()
@@ -288,7 +341,7 @@ class linearControl(ControlWithRefresh):
         super().__init__(parent=parent)
         self.name = name
         self.movState = {}
-        self.controller = l3(self.name, ECM)
+        self.controller = smaractLinear(self.name, ECM)
         self.isHome = {}
         self.ECM = ECM
         if name == 'l1':
@@ -333,7 +386,9 @@ class linearControl(ControlWithRefresh):
             
     def makeConnections(self):
         self.bStopAll.clicked.connect(self.stopAll)
-           
+        self.bLoad.clicked.connect(lambda: self.load(path=''))
+        self.bSave.clicked.connect(lambda: self.save(path=''))
+        self.bSetAll.clicked.connect(self.setAll)
         for axis in self.axes:
             self.axesControl[axis]['setStep'].valueChanged.connect(self.axesControl[axis]['set'].setSingleStep)
             self.axesControl[axis]['go'].clicked.connect(self.goToSetPos(axis))
@@ -341,15 +396,17 @@ class linearControl(ControlWithRefresh):
             self.axesControl[axis]['sR'].clicked.connect(self.makeStep(axis, 1.))
             self.axesControl[axis]['home'].clicked.connect(self.home(axis))
             self.axesControl[axis]['stop'].clicked.connect(self.stop(axis))
-            
+    
+    def readValues(self):
+        for axis in self.axes:
+            self.pos[axis] = self.controller.getPos(self.chForECM[axis])
+            self.movState[axis] = self.controller.movState(self.chForECM[axis])
+            self.isHome[axis] = self.controller.isHome(self.chForECM[axis])
+    
     def refresh(self): 
         if self.isConnected:
-            for axis in self.axes:
-                self.pos[axis] = self.controller.getPos(self.chForECM[axis])
-                self.movState[axis] = self.controller.movState(self.chForECM[axis])
-                self.isHome[axis] = self.controller.isHome(self.chForECM[axis])
-                
-            posRounded = self.posRound()
+            self.readValues()                
+            posRounded = self.posRound(self.pos)
             for axis in self.axes:
                 
                 self.axesControl[axis]['pos'].setText(posRounded[axis])
@@ -371,20 +428,20 @@ class linearControl(ControlWithRefresh):
                 if not self.isHome[axis]:
                     self.axesControl[axis]['home'].setStyleSheet('QPushButton {background: red}')
                     
-    def posRound(self):
+    def posRound(self, pos):
         posRounded = {}
         for axis in self.axes:
             try:
-                posRounded[axis] = str(np.round(float(self.pos[axis])/self.unitConversion[axis], 2))
+                posRounded[axis] = str(np.round(float(pos[axis])/self.unitConversion[axis], 2))
             except:
-                posRounded[axis] = self.pos[axis]
+                posRounded[axis] = pos[axis]
         
         return posRounded
     
     def settings(self): 
         for ch in self.chForECM:
-            self.controller.setFrq(ch, self.controller.stdFrq)               
-    
+            self.controller.setFrq(ch, self.controller.stdFrq)  
+            
     def home(self, axis):
         def function():
             reply = QMessageBox.question(self, 'Confirmation', 'Start Homing '+self.name+' '+axis+'?', QMessageBox.Yes, QMessageBox.No)
@@ -426,10 +483,35 @@ class linearControl(ControlWithRefresh):
             self.setPos(axis)
         return function
     
+    def setAll(self):
+        for axis in self.axes:
+            self.goToSetPos(axis)()
+    
+    def save(self, path = ''):
+        if path == '':
+            path = getFileSave()
+        if path != '':
+            s = Storage(path, 'test')
+            self.readValues()
+            for axis in self.axes:
+                if self.pos[axis] != None:
+                    s.addData(self.name, axis, float(self.pos[axis])/self.unitConversion[axis], unit = 'um')            
+            s.close()
+            
+    def load(self, path = ''):
+        if path == '':
+            path = getFileOpen()
+        if path != '':
+            s = StorageRead(path)
+            for axis in self.axes:
+                val = s.getData(self.name, axis)
+                if val != None:
+                    self.axesControl[axis]['set'].setValue(val)
+            s.close()
+    
     def closeEvent(self, event):
         self.isConnected = False
         event.accept()
-
 
 class Executor(QThread):
     def __init__(self, function, parent = None):

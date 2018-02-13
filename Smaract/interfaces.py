@@ -86,7 +86,7 @@ class hexapod():
         if pos[0]!='!':
             return pos.split(' ')[:6]
         else:
-            return ['not ref.', 'not ref.', 'not ref.', 'not ref.', 'not ref.', 'not ref.']
+            return [None, None, None, None, None, None]
     
     def set6d(self, pos):
         # pos contains all 6 target coordinates
@@ -98,6 +98,16 @@ class hexapod():
         else:
             return False
 
+    def getPivot(self):
+        # piv contains all 3 pivot coordinates
+        cmd = 'piv?'
+        self.send(cmd)        
+        piv  = self.ECM.ret
+        if piv[0]!='!':
+            return piv.split(' ')[:3]
+        else:
+            return [None, None, None]
+    
     def setPivot(self, piv):
         # piv contains all 3 pivot coordinates
         cmd = 'piv '
@@ -143,9 +153,8 @@ class hexapod():
         cmd = 'stop'
         return self.send(cmd)
     
-class l3():
-
-    '''A class for hexapod control with ASCII Commands'''
+class smaractLinear():
+    '''A class for Smaract linear control with ASCII Commands'''
     def __init__(self, name, ECM):
         self.mainName = name
         self.ECM = ECM
@@ -180,7 +189,7 @@ class l3():
         if pos[0]!='!':
             return pos
         else:
-            return 'not ref.'
+            return None
         
     def setPos(self, ch, pos):
         cmd = 'mpa ' + str(ch) + ' ' + str(pos)
