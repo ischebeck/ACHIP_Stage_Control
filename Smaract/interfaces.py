@@ -89,7 +89,7 @@ class hexapod():
             return [None, None, None, None, None, None]
     
     def set6d(self, pos):
-        # pos contains all 6 target coordinates
+        # pos contains all 6 target coordinates (list or array)
         if self.isPosReachable(pos):
             cmd = 'mov '
             for c in pos:
@@ -120,7 +120,7 @@ class hexapod():
         return self.send(cmd)
         
     def isPosReachable(self, pos):
-        # pos contains all 6 target coordinates
+        # pos contains all 6 target coordinates (list)
         cmd = 'rea? '
         for c in pos:
             cmd+= str(c)+' '
