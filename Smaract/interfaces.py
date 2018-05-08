@@ -120,7 +120,7 @@ class hexapod():
         return self.send(cmd)
         
     def isPosReachable(self, pos):
-        # pos contains all 6 target coordinates (list)
+        # pos contains all 6 target coordinates (list or array)
         cmd = 'rea? '
         for c in pos:
             cmd+= str(c)+' '
