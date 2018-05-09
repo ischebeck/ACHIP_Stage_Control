@@ -2,7 +2,7 @@
 import time
 from pcaspy import Driver, SimpleServer
 
-prefix = 'SATSY01-DLAC080-DTEST:TEST' #define PV’s for reading and setting the speed
+prefix = 'SATSY01-DLAC080-DTEST:' #define PV’s for reading and setting the speed
 
 pvdb = {
         'VAL': {'TYPE': 'int'},
