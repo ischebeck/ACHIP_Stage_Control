@@ -5,8 +5,8 @@ from pcaspy import Driver, SimpleServer
 prefix = 'SATSY01-DLAC080-DHXP:' #define PV’s for reading and setting the speed
 
 pvdb = {
-        'SMS': {'TYPE': 'string'},
-        'RMS': {'TYPE': 'string'},
+        'SMS': {'TYPE': 'char'},
+        'RMS': {'TYPE': 'char'},
         }
 
 class myDriver(Driver):
@@ -25,7 +25,7 @@ class myDriver(Driver):
         if reason == 'RMS': #if EPICS input RBV (in progress)
             time.sleep(0.01)
             # read return message
-            value = 'RMS' + str(time.time())
+            value = str(time.time())
             
             print ('rms ', value)
             return value
