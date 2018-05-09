@@ -5,12 +5,10 @@ from pcaspy import Driver, SimpleServer
 prefix = 'SATSY01-DLAC080-DHXP:' #define PV’s for reading and setting the speed
 
 pvdb = {
-        'SMS': {'type': 'char',
-                'count' : 300,
-                'value' : 'some initial message. but it can become very long.'},
-        'RMS': {'type': 'char',
-                'count' : 300,
-                'value' : 'some initial message. but it can become very long.'},
+        'SMS': {'type': 'string',
+                'value' : 'some'},
+        'RMS': {'type': 'string',
+                'value' : 'some'},
         }
 
 class myDriver(Driver):
