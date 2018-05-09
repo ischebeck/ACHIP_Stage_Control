@@ -2,11 +2,11 @@
 import time
 from pcaspy import Driver, SimpleServer
 
-prefix = 'SATSY01-DLAC080-DTEST:' #define PV’s for reading and setting the speed
+prefix = 'SATSY01-DLAC080-DHXP:' #define PV’s for reading and setting the speed
 
 pvdb = {
-        'VAL': {'TYPE': 'int'},
-        'RBV': {'TYPE': 'float'},
+        'SMS': {'TYPE': 'str'},
+        'RMS': {'TYPE': 'str'},
         }
 
 class myDriver(Driver):
@@ -14,17 +14,20 @@ class myDriver(Driver):
     def __init__(self):
         super(myDriver, self).__init__()
 
-    def write(self, reason, speedval):
-        if reason == 'VAL': #if EPICS input VAL
-            print('new speed is', speedval)     
-            self.setParam(reason, speedval)
+    def write(self, reason, msg):
+        if reason == 'SMS': #if EPICS input SMS
+            print('send command ', msg)     
+            self.setParam(reason, msg)
+            #send to hexapod
         return True
 
     def read(self, reason):
-        if reason == 'RBV': #if EPICS input RBV (in progress)
+        if reason == 'RMS': #if EPICS input RBV (in progress)
             time.sleep(0.01)
-            value = self.getParam(reason)
-            print ('speed is '); print (value)
+            # reat return message
+            value = 'RMS' + str(time.time())
+            
+            print ('rms ', value)
             return value
 
 if __name__ == '__main__': #create PVs based on prefix and pvdb definition
