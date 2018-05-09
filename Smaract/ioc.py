@@ -8,8 +8,7 @@ pvdb = {
         'SMS': {'type': 'string',
                 'value': 'init'},
         'RMS': {'type': 'string',
-                'value': 'init',
-                'scan': 1},
+                'value': 'init'},
         }
 
 class myDriver(Driver):
@@ -22,16 +21,11 @@ class myDriver(Driver):
             print('send command ', msg)     
             self.setParam(reason, msg)
             #send to hexapod
+            
+            #read from hexapod
+            self.setParam('RMS', msg)
         return True
 
-    def read(self, reason):
-        if reason == 'RMS': #if EPICS input RBV (in progress)
-            time.sleep(0.01)
-            # read return message
-            value = str(time.time())
-            
-            print ('rms ', value)
-            return value
 
 if __name__ == '__main__': #create PVs based on prefix and pvdb definition
     server = SimpleServer()
