@@ -24,6 +24,7 @@ class myDriver(Driver):
             
             #read from hexapod
             self.setParam('RMS', msg)
+            self.updatePVs
         return True
 
 
