@@ -6,9 +6,10 @@ prefix = 'SATSY01-DLAC080-DHXP:' #define PV’s for reading and setting the spee
 
 pvdb = {
         'SMS': {'type': 'string',
-                'value' : 'some'},
+                'value': 'init'},
         'RMS': {'type': 'string',
-                'value' : 'some'},
+                'value': 'init',
+                'scan': 1},
         }
 
 class myDriver(Driver):
