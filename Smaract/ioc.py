@@ -6,9 +6,9 @@ from interfaces import ECM, hexapod, smaractLinear
 prefix = 'SATSY01-DLAC080-DHXP:' #define PV’s for reading and setting the speed
 
 pvdb = {
-        'SMS': {'type': 'string',
+        'SMS': {'type': 'char',
                 'value': 'init'},
-        'RMS': {'type': 'string',
+        'RMS': {'type': 'char',
                 'value': 'init'},
         }
 
