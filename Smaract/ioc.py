@@ -20,7 +20,8 @@ pvdb = {
                     'value': [0.,0.,0.,0.,0.,0.]},
         'hGet6d': {'type': 'float',
                    'count': 6,
-                    'value': [0.,0.,0.,0.,0.,0.]},
+                    'value': [0.,0.,0.,0.,0.,0.],
+                    'scan': 0.1},
                         
         }
 
@@ -62,6 +63,7 @@ class iocDriver(Driver):
         if reason == 'hGet6d':
             #pos = self.hexpod.get6d()
             pos = self.getParam('hSet6d')
+            print(pos)
             self.setParam(reason, pos)
                 
         self.updatePVs()
