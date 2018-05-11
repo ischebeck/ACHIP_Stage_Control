@@ -40,7 +40,6 @@ class iocDriver(Driver):
             #send and recieve from ECM
             returnMsg = self.ECM.sendRaw(msg)
             self.setParam('returnMsg', self.strToChr(returnMsg))
-            self.updatePVs()
             
         if reason == 'connect':
             if val == 1:
@@ -49,13 +48,13 @@ class iocDriver(Driver):
             else: 
                 self.ECM.disconnect()
                 self.setParam('isConnected', 0)
-            self.updatePVs()
             
         if reason == 'hSet6d':
             print(val)
             self.setParam(reason, val)
             #self.hexpod.set6d(val)
         
+        self.updatePVs()
         return True
         
     def read(self, reason):
@@ -64,8 +63,10 @@ class iocDriver(Driver):
             #pos = self.hexpod.get6d()
             pos = self.getParam('hSet6d')
             self.setParam(reason, pos)
-            self.updatePVs()
             return pos
+    
+        self.updatePVs()
+        return True
     
     def strToChr(self, msg):
         return [ord(s) for s in msg]
