@@ -6,7 +6,7 @@ from interfaces import ECM, hexapod, smaractLinear
 prefix = 'SATSY01-DLAC080-DHXP:' #define PV’s for reading and setting the speed
 
 pvdb = {
-        'SMS': {'type': 'char',
+        'SMS': {'type': 'str',
                 'value': 'init'},
         'RMS': {'type': 'char',
                 'value': 'init'},
@@ -21,11 +21,10 @@ class iocDriver(Driver):
 
     def write(self, reason, msg):
         if reason == 'SMS': #if EPICS input SMS
-            msgAsString = ''.join(msg)
-            print('send command ', msgAsString)     
+            print('send command ', msg)     
             self.setParam(reason, msg)
             #send to ECM
-            self.ECM.sendRaw(msgAsString)
+            self.ECM.sendRaw(msg)
             
             #read-back from hexapod
             msg = self.ECM.ret
