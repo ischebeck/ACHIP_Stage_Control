@@ -28,8 +28,8 @@ class iocDriver(Driver):
             
             #read-back from hexapod
             msg = self.ECM.ret
-            print(msg)
-            self.setParam('RMS', [ord(s) for s in msg])
+            print(str(msg))
+            self.setParam('RMS', [ord(s) for s in str(msg)])
             self.updatePVs()
         return True
 
