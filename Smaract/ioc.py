@@ -59,11 +59,7 @@ class iocDriver(Driver):
         return status
         
     def read(self, reason):
-        
-        if reason == 'returnMsg':
-            print(self.chrToStr(self.getParam(reason)))
-            return self.chrToStr(self.getParam(reason))
-        
+                
         if reason == 'hGet6d':
             #pos = self.hexpod.get6d()
             pos = self.getParam('hSet6d')
