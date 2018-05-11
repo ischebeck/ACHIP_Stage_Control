@@ -21,15 +21,16 @@ class iocDriver(Driver):
 
     def write(self, reason, msg):
         if reason == 'SMS': #if EPICS input SMS
-            print('send command ', msg)     
+            msgAsString = ''.join(msg)
+            print('send command ', msgAsString)     
             self.setParam(reason, msg)
             #send to ECM
-            self.ECM.sendRaw(msg)
+            self.ECM.sendRaw(msgAsString)
             
             #read-back from hexapod
             msg = self.ECM.ret
             print(msg)
-            self.setParam('RMS', msg)
+            self.setParam('RMS', list(msg))
             self.updatePVs()
         return True
 
