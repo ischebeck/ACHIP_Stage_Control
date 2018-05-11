@@ -32,10 +32,6 @@ class iocDriver(Driver):
             self.setParam('RMS', self.strToChr(msg))
             self.updatePVs()
         return True
-
-    def read(self, reason):
-        if reason == 'RMS':
-            return chrToStr(self.getParam(reason))
     
     def strToChr(self, msg):
         return [ord(s) for s in msg]
