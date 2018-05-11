@@ -43,7 +43,8 @@ class iocDriver(Driver):
             else: 
                 self.ECM.disconnect()
                 self.setParam('isConnected', 0)
-                
+            self.updatePVs()
+            
         return True
         
     def strToChr(self, msg):
