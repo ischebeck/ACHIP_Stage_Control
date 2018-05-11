@@ -63,11 +63,10 @@ class iocDriver(Driver):
         if reason == 'hGet6d':
             #pos = self.hexpod.get6d()
             pos = self.getParam('hSet6d')
-            print(pos)
-            self.setParam(reason, pos)
-                
-        self.updatePVs()
-        return True
+            self.setParam(reason, pos)    
+            self.updatePVs()
+            return pos
+ 
     
     def strToChr(self, msg):
         return [ord(s) for s in msg]
