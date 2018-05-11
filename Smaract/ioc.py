@@ -15,7 +15,7 @@ pvdb = {
 class iocDriver(Driver):
 
     def __init__(self):
-        super(myDriver, self).__init__()
+        super(iocDriver, self).__init__()
         self.ECM = ECM()
 
     def write(self, reason, msg):
