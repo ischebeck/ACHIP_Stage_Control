@@ -15,10 +15,10 @@ pvdb = {
                     'value': 0},
         'isConnected': {'type': 'int',
                     'value': 0},
-        'hSet6d': {'type': float,
+        'hSet6d': {'type': 'float',
                    'count': 6,
                     'value': [0.,0.,0.,0.,0.,0.]},
-        'hGet6d': {'type': float,
+        'hGet6d': {'type': 'float',
                    'count': 6,
                     'value': [0.,0.,0.,0.,0.,0.]},
                         
