@@ -2,6 +2,7 @@
 import time
 from pcaspy import Driver, SimpleServer
 from interfaces import ECM, hexapod, smaractLinear
+import numpy as np
 
 prefix = 'SATSY01-DLAC080-DHXP:' #define PV’s for reading and setting the speed
 
@@ -9,7 +10,7 @@ pvdb = {
         'SMS': {'type': 'str',
                 'value': 'init'},
         'RMS': {'type': 'char',
-                },
+                'value': np.array([0])},
         }
 
 class iocDriver(Driver):
@@ -29,7 +30,7 @@ class iocDriver(Driver):
             #read-back from hexapod
             msg = self.ECM.ret
             print(str(msg))
-            self.setParam('RMS', [ord(s) for s in str(msg)])
+            self.setParam('RMS', np.array([ord(s) for s in str(msg)]))
             self.updatePVs()
         return True
 
