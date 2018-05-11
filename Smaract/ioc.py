@@ -15,6 +15,12 @@ pvdb = {
                     'value': 0},
         'isConnected': {'type': 'int',
                     'value': 0},
+        'hSet6d': {'type': float,
+                   'count': 6,
+                    'value': [0.,0.,0.,0.,0.,0.]},
+        'hGet6d': {'type': float,
+                   'count': 6,
+                    'value': [0.,0.,0.,0.,0.,0.]},
                         
         }
 
@@ -23,8 +29,8 @@ class iocDriver(Driver):
     def __init__(self):
         super(iocDriver, self).__init__()
         self.ECM = ECM()
-        self.ECM.connect()
-
+        self.hexpod = hexapod('hexapod', self.ECM)
+        
     def write(self, reason, val):
 
         if reason == 'sendRaw': #if EPICS input sendRaw
@@ -45,8 +51,22 @@ class iocDriver(Driver):
                 self.setParam('isConnected', 0)
             self.updatePVs()
             
+        if reason == 'hSet6d':
+            print(val)
+            self.setParam(reason, val)
+            #self.hexpod.set6d(val)
+        
         return True
         
+    def read(self, reason):
+        
+        if reason == 'hGet6d':
+            #pos = self.hexpod.get6d()
+            pos = self.getParam('hSet6d')
+            self.setParam(hSet6d, pos)
+            #self.hexpod.set6d(val)
+            return pos
+    
     def strToChr(self, msg):
         return [ord(s) for s in msg]
 

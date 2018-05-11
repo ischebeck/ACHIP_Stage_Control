@@ -63,18 +63,16 @@ class hexapod():
         self.stdFrq = 5000
         
     def connect(self):
-        self.ECM.sendRaw('%unit-activated? '+self.unit)
-        if self.ECM.ret == '0\r\n':
+        if self.ECM.sendRaw('%unit-activated? '+self.unit) == '0\r\n':
             self.ECM.sendRaw('%activate-unit '+self.unit)    
-            return self.ECM.ret
-        return True
+            return True
+        return 
     
     def disconnect(self):
-        self.ECM.sendRaw('%unit-activated? '+self.unit)
-        if self.ECM.ret == '1\r\n':
+        if self.ECM.sendRaw('%unit-activated? '+self.unit) == '1\r\n':
             self.ECM.sendRaw('%deactivate-unit '+self.unit)    
-            return self.ECM.ret
-        return True
+            return True
+        return 
 
     def send(self, cmd):
         return self.ECM.send(self.unit, cmd)
@@ -162,18 +160,16 @@ class smaractLinear():
         self.stdFrq = 5000
         
     def connect(self):
-        self.ECM.sendRaw('%unit-activated? '+self.unit)
-        if self.ECM.ret == '0\r\n':
+        if self.ECM.sendRaw('%unit-activated? '+self.unit) == '0\r\n':
             self.ECM.sendRaw('%activate-unit '+self.unit)    
-            return self.ECM.ret
-        return True
+            return True
+        return 
     
     def disconnect(self):
-        self.ECM.sendRaw('%unit-activated? '+self.unit)
-        if self.ECM.ret == '1\r\n':
+        if self.ECM.sendRaw('%unit-activated? '+self.unit) == '1\r\n':
             self.ECM.sendRaw('%deactivate-unit '+self.unit)    
-            return self.ECM.ret
-        return True
+            return True
+        return 
 
     def send(self, cmd):
         return self.ECM.send(self.unit, cmd)
