@@ -10,7 +10,7 @@ pvdb = {
         'SMS': {'type': 'str',
                 'value': 'init'},
         'RMS': {'type': 'char',
-                'count': 1e5},
+                'count': 1000},
         }
 
 class iocDriver(Driver):
