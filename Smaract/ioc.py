@@ -10,7 +10,7 @@ pvdb = {
         'SMS': {'type': 'str',
                 'value': 'init'},
         'RMS': {'type': 'char',
-                'value': np.array([0])},
+                'count': 1e5},
         }
 
 class iocDriver(Driver):
@@ -29,8 +29,8 @@ class iocDriver(Driver):
             
             #read-back from hexapod
             msg = self.ECM.ret
-            print(str(msg))
-            self.setParam('RMS', np.array([ord(s) for s in str(msg)]))
+            print(msg)
+            self.setParam('RMS', msg)
             self.updatePVs()
         return True
 
