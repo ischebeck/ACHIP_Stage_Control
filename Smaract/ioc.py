@@ -17,6 +17,7 @@ class iocDriver(Driver):
     def __init__(self):
         super(iocDriver, self).__init__()
         self.ECM = ECM()
+        self.ECM.connect()
 
     def write(self, reason, msg):
         if reason == 'SMS': #if EPICS input SMS
