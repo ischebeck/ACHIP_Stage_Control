@@ -29,11 +29,19 @@ class iocDriver(Driver):
             
             #read-back from hexapod
             msg = self.ECM.ret
-            print(msg)
-            self.setParam('RMS', [ord(s) for s in msg])
+            self.setParam('RMS', self.strToChr(msg))
             self.updatePVs()
         return True
 
+    def read(self, reason):
+        if reason == 'RMS':
+            return chrToStr(self.getParam(reason))
+    
+    def strToChr(self, msg):
+        return [ord(s) for s in msg]
+
+    def chrToStr(self, msg):
+        return ''.join([chr(s) for s in msg])
 
 
 if __name__ == '__main__': #create PVs based on prefix and pvdb definition
