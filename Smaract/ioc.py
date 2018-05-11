@@ -61,6 +61,7 @@ class iocDriver(Driver):
     def read(self, reason):
         
         if reason == 'returnMsg':
+            print(self.chrToStr(self.getParam(reason)))
             return self.chrToStr(self.getParam(reason))
         
         if reason == 'hGet6d':
@@ -68,7 +69,7 @@ class iocDriver(Driver):
             pos = self.getParam('hSet6d')
             self.setParam(reason, pos)    
             self.updatePVs()
-            
+            return pos
     
         return True
         
