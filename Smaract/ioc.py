@@ -68,7 +68,7 @@ class iocDriver(Driver):
             pos = self.getParam('hSet6d')
             self.setParam(reason, pos)    
             self.updatePVs()
-            return pos
+            
     
         return True
         
