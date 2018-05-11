@@ -7,10 +7,15 @@ import numpy as np
 prefix = 'SATSY01-DLAC080-DHXP:' #define PV’s for reading and setting the speed
 
 pvdb = {
-        'SMS': {'type': 'str',
-                'value': 'init'},
-        'RMS': {'type': 'char',
-                'count': 100000},
+        'sendRaw': {'type': 'str',
+                    'value': 'init'},
+        'returnMsg': {'type': 'char',
+                      'count': 100000},
+        'connect': {'type': 'int',
+                    'value': 0},
+        'isConnected': {'type': 'int',
+                    'value': 0},
+                        
         }
 
 class iocDriver(Driver):
@@ -20,21 +25,27 @@ class iocDriver(Driver):
         self.ECM = ECM()
         self.ECM.connect()
 
-    def write(self, reason, msg):
-        if reason == 'SMS': #if EPICS input SMS
+    def write(self, reason, val):
+
+        if reason == 'sendRaw': #if EPICS input sendRaw
+            msg = val
             print('send command ', msg)     
             self.setParam(reason, msg)
-            #send to ECM
-            self.ECM.sendRaw(msg)
-            
-            #read-back from hexapod
-            msg = self.ECM.ret
-            
-            
-            self.setParam('RMS', self.strToChr(msg))
+            #send and recieve from ECM
+            returnMsg = self.ECM.sendRaw(msg)
+            self.setParam('returnMsg', self.strToChr(returnMsg))
             self.updatePVs()
+            
+        if reason == 'connect':
+            if val == 1:
+                self.ECM.connect()
+                self.setParam('isConnected', 1)
+            else: 
+                self.ECM.disconnect()
+                self.setParam('isConnected', 0)
+                
         return True
-    
+        
     def strToChr(self, msg):
         return [ord(s) for s in msg]
 
