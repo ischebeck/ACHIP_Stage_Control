@@ -4,7 +4,7 @@ from pcaspy import Driver, SimpleServer
 from interfaces import ECM, hexapod, smaractLinear
 import numpy as np
 
-prefix = 'SATSY01-DLAC080-DHXP:' #define PV’s for reading and setting the speed
+prefix = 'SATSY01-DLAC080-DHXP:' #PV prefix
 
 pvdb = {
         'sendRaw': {'type': 'str',
@@ -14,15 +14,14 @@ pvdb = {
         'connect': {'type': 'int',
                     'value': 0},
         'isConnected': {'type': 'int',
-                    'value': 0},
+                        'value': 0},
         'hSet6d': {'type': 'float',
                    'count': 6,
-                    'value': [0.,0.,0.,0.,0.,0.]},
+                   'value': [0.,0.,0.,0.,0.,0.]},
         'hGet6d': {'type': 'float',
                    'count': 6,
-                    'value': [0.,0.,0.,0.,0.,0.],
-                    'scan': 0.1},
-                        
+                   'value': [0.,0.,0.,0.,0.,0.],
+                   'scan': 0.1},
         }
 
 class iocDriver(Driver):
@@ -59,20 +58,24 @@ class iocDriver(Driver):
         return status
         
     def read(self, reason):
-                
+        status = True
+        
         if reason == 'hGet6d':
             #pos = self.hexpod.get6d()
             pos = self.getParam('hSet6d')
-            self.setParam(reason, pos)    
-            self.updatePVs()
-            return pos
+            if pos[0] != None:
+                self.setParam(reason, pos)    
+                self.updatePVs()
+                return pos
+            else: # reading errror
+                status = False 
     
-        return True
+        return status
         
-    def strToChr(self, msg):
+    def strToChr(self, msg): # convert string to character array
         return [ord(s) for s in msg]
 
-    def chrToStr(self, msg):
+    def chrToStr(self, msg): # convert character array to string
         return ''.join([chr(s) for s in msg])
 
 

@@ -3,9 +3,10 @@ from time import sleep
 import socket
 
 class ECM():
+    """ ECM (embedded control module) - Smaract Motor Controller """
     def __init__(self):
         #self.TCP_IP = '129.129.217.74'
-        self.TCP_IP = 'ECM-00000029.psi.ch' 
+        self.TCP_IP = 'ECM-00000029.psi.ch'  # hostname
         self.TCP_PORT = 2000
         self.ret = '' # last return message
         self.isConnected = False
