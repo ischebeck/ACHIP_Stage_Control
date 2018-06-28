@@ -51,8 +51,9 @@ class iocDriver(Driver):
                 self.setParam('isConnected', 0)
             
         if reason == 'hSet6d':
-            self.setParam(reason, val)
-            #self.hexpod.set6d(val)
+            success = self.setParam(reason, val)
+            if not success:
+                status = False
         
         self.updatePVs()
         return status
