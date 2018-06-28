@@ -11,12 +11,12 @@ from interfaces import ECM
 def openWindow(ECM):
  
    ECMW = ECMControl('ECM', ECM)
-   hexa = hexapodControl('hexapod', ECM)
+   h = hexapodControl('hexapod', ECM)
    l1 = linearControl('l1', ECM)
    l2 = linearControl('l2', ECM)
    l3 = linearControl('l3', ECM)
    lH = linearControl('lH', ECM)
-   ECMW.addDeviceControl('hexapod', hexa)
+   ECMW.addDeviceControl('hexapod', h)
    ECMW.addDeviceControl('l1', l1)
    ECMW.addDeviceControl('l2', l2)
    ECMW.addDeviceControl('l3', l3)
