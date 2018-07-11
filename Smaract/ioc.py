@@ -32,6 +32,7 @@ class iocDriver(Driver):
         self.hexpod = hexapod('hexapod', self.ECM)
         
     def write(self, reason, val):
+        
         status = True
         
         if reason == 'sendRaw': #if EPICS input sendRaw
@@ -43,7 +44,7 @@ class iocDriver(Driver):
             self.setParam('returnMsg', self.strToChr(returnMsg))
             
         if reason == 'connect':
-            if val == 1:
+            if val == True:
                 self.ECM.connect()
                 self.setParam('isConnected', 1)
             else: 
@@ -59,6 +60,7 @@ class iocDriver(Driver):
         return status
         
     def read(self, reason):
+        
         status = True
         
         if reason == 'hGet6d':
@@ -66,11 +68,12 @@ class iocDriver(Driver):
             pos = self.getParam('hSet6d')
             if pos[0] != None:
                 self.setParam(reason, pos)    
-                self.updatePVs()
+                
                 return pos
             else: # reading errror
                 status = False 
-    
+        
+        self.updatePVs()
         return status
         
     def strToChr(self, msg): # convert string to character array
