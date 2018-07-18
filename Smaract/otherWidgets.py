@@ -491,6 +491,7 @@ class linearControl(ControlWithRefresh):
         if path == '':
 #            path = getFileSave()
             path = os.path.join(os.getcwd(), 'testStorage.hdf5')
+            
         if path != '':
             s = Storage(path, 'test')
             self.readValues()
