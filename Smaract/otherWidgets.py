@@ -489,7 +489,8 @@ class linearControl(ControlWithRefresh):
     
     def save(self, path = ''):
         if path == '':
-            path = getFileSave()
+#            path = getFileSave()
+            path = os.path.join(os.getcwd(), 'testStorage.hdf5')
         if path != '':
             s = Storage(path, 'test')
             self.readValues()
@@ -500,8 +501,7 @@ class linearControl(ControlWithRefresh):
             
     def load(self, path = ''):
         if path == '':
-            #path = getFileOpen()
-            path = os.path.join(os.getcwd(), 'testStorage.hdf5')
+            path = getFileOpen()
         if path != '':
             s = StorageRead(path)
             for axis in self.axes:
