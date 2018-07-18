@@ -500,7 +500,8 @@ class linearControl(ControlWithRefresh):
             
     def load(self, path = ''):
         if path == '':
-            path = getFileOpen()
+            #path = getFileOpen()
+            path = os.path.join(os.getcwd(), 'testStorage.hdf5')
         if path != '':
             s = StorageRead(path)
             for axis in self.axes:
