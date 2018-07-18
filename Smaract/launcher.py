@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
-usePyQt5 = True
+usePyQt5 = False
 if usePyQt5: 
     import PyQt5.QtWidgets as QtWidgets
 else: 

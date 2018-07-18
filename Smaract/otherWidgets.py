@@ -1,4 +1,4 @@
-usePyQt5 = True
+usePyQt5 = False
 if usePyQt5:
     from PyQt5.QtCore import pyqtSlot, QTimer, QThread, QSize
     from PyQt5 import uic, Qt
