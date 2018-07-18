@@ -20,7 +20,7 @@ def getFileOpen():
 class Storage:
     def __init__(self, path, comment = ''):
         self.path = path
-        self.File = h5py.File(path, 'a')
+        self.File = h5py.File(self.path, 'a')
         self.addTime(self.File)
         self.addComment(self.File, comment)
           
