@@ -135,7 +135,9 @@ class ECMControl(ControlWithRefresh):
     
     def save(self, path = ''):
         if path == '':
-            path = getFileSave()
+ #           path = getFileSave()
+            path = os.path.join(os.getcwd(), 'testStorage.hdf5')
+ 
         if path != '':
             for name in self.devices:
                 self.devices[name].save(path = path)
@@ -489,8 +491,7 @@ class linearControl(ControlWithRefresh):
     
     def save(self, path = ''):
         if path == '':
-#            path = getFileSave()
-            path = os.path.join(os.getcwd(), 'testStorage.hdf5')
+            path = getFileSave()
             
         if path != '':
             s = Storage(path, 'test')
