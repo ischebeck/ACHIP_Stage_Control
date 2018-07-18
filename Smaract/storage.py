@@ -6,8 +6,11 @@ from os.path import join
 from time import strftime, localtime
 import cmd
 import numpy as np
-from PyQt5.QtWidgets import QFileDialog
-
+usePyQt5 = False
+if usePyQt5: 
+    from PyQt5.QtWidgets import QFileDialog
+else:
+    from PyQt4.QtGui import QFileDialog
 def getFileSave():
     return QFileDialog.getSaveFileName(None, 'Select Folder', os.getcwd(), options = QFileDialog.DontConfirmOverwrite)[0]
    

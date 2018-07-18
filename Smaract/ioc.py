@@ -37,7 +37,7 @@ class iocDriver(Driver):
         
         if reason == 'sendRaw': #if EPICS input sendRaw
             msg = val
-            print('send command ', msg)     
+            #print('send command ', msg)     
             self.setParam(reason, msg)
             #send and recieve from ECM
             returnMsg = self.ECM.sendRaw(msg)
