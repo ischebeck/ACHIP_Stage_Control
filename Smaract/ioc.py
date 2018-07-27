@@ -64,8 +64,8 @@ class iocDriver(Driver):
         status = True
         
         if reason == 'hGet6d':
-            #pos = self.hexpod.get6d()
-            pos = self.getParam('hSet6d')
+            pos = self.hexpod.get6d()
+            #pos = self.getParam('hSet6d')
             if pos[0] != None:
                 self.setParam(reason, pos)    
                 
