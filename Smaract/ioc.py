@@ -64,14 +64,15 @@ class iocDriver(Driver):
         status = True
         
         if reason == 'hGet6d':
-            pos = self.hexpod.get6d()
-            #pos = self.getParam('hSet6d')
-            if pos[0] != None:
-                self.setParam(reason, pos)    
+            if self.getParam('isConnected') == 1:
+                pos = self.hexpod.get6d()
+                #pos = self.getParam('hSet6d')
+                if pos[0] != None:
+                    self.setParam(reason, pos)    
                 
-                return pos
-            else: # reading errror
-                status = False 
+                    return pos
+                else: # reading errror
+                    status = False 
         
         self.updatePVs()
         return status
