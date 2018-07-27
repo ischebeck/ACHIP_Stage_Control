@@ -68,9 +68,9 @@ class iocDriver(Driver):
                 pos = self.hexpod.get6d()
                 #pos = self.getParam('hSet6d')
                 if pos[0] != None:
-                    self.setParam(reason, pos)    
+                    self.setParam(reason, np.array(pos, dtype = float))    
                 
-                    return pos
+                    return np.array(pos, dtype = float)
                 else: # reading errror
                     status = False 
         
